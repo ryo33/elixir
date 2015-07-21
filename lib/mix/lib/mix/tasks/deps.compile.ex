@@ -113,17 +113,17 @@ defmodule Mix.Tasks.Deps.Compile do
     end
   end
 
-  defp do_rebar(%Mix.Dep{app: app} = dep, config) do
+  defp do_rebar(dep, config) do
     lib_path = Path.join(config[:build_path], "lib")
-    do_command dep, rebar_cmd(app), false,
+    do_command dep, rebar_cmd(dep), false,
                "compile skip_deps=true deps_dir=#{inspect lib_path}"
   end
 
-  defp rebar_cmd(app) do
-    Mix.Rebar.rebar_cmd || handle_rebar_not_found(app)
+  defp rebar_cmd(%Mix.Dep{manager: manager} = dep) do
+    Mix.Rebar.rebar_cmd(manager) || handle_rebar_not_found(dep)
   end
 
-  defp handle_rebar_not_found(app) do
+  defp handle_rebar_not_found(%Mix.Dep{app: app, manager: manager}) do
     shell = Mix.shell
     shell.info "Could not find rebar, which is needed to build dependency #{inspect app}"
     shell.info "I can install a local copy which is just used by mix"
@@ -133,7 +133,7 @@ defmodule Mix.Tasks.Deps.Compile do
         "dependency #{app}, please ensure rebar is available"
     end
 
-    (Mix.Tasks.Local.Rebar.run([]) && Mix.Rebar.local_rebar_cmd) ||
+    (Mix.Tasks.Local.Rebar.run([]) && Mix.Rebar.local_rebar_cmd(manager)) ||
       Mix.raise "rebar installation failed"
   end
 
